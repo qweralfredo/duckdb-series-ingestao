@@ -1,0 +1,522 @@
+### Banking API - Exemplos de Uso HTTP
+### Base URL: https://localhost:7085 (HTTPS) ou http://localhost:7085 (HTTP)
+
+### =======================================
+### 1. HEALTH CHECKS & STATUS
+### =======================================
+
+### Health Check Simples
+GET https://localhost:7085/health
+Accept: application/json
+
+###
+
+### Health Check Detalhado
+GET https://localhost:7085/api/health
+Accept: application/json
+
+###
+
+### Informações do Sistema
+GET https://localhost:7085/api/health/info
+Accept: application/json
+
+###
+
+### Status do MinIO
+GET https://localhost:7085/api/reports/minio/status
+Accept: application/json
+
+###
+
+### =======================================
+### 2. SIMULAÇÕES
+### =======================================
+
+### Informações sobre Simulações Disponíveis
+GET https://localhost:7085/api/simulation/info
+Accept: application/json
+
+###
+
+### Simulação Rápida (5 pessoas, 2 empresas, 20 transações)
+POST https://localhost:7085/api/simulation/rapida
+Content-Type: application/json
+
+###
+
+### Simulação Completa Customizada
+POST https://localhost:7085/api/simulation/completa
+Content-Type: application/json
+
+{
+  "quantidadePessoas": 15,
+  "quantidadeEmpresas": 8,
+  "quantidadeTransacoes": 75
+}
+
+###
+
+### Simulação Intensiva (50 pessoas, 20 empresas, 200 transações)
+POST https://localhost:7085/api/simulation/intensiva
+Content-Type: application/json
+
+###
+
+### =======================================
+### 3. TRANSAÇÕES MANUAIS
+### =======================================
+
+### Solicitar Transação Regular
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 1250.50,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 1002,
+  "descricao": "Transferência via PIX",
+  "informacaoRemessa": "Pagamento de serviços"
+}
+
+###
+
+### Solicitar Transação TED
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 7085.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 1003,
+  "descricao": "TED para outra conta",
+  "codigoFinalidade": "OTHR",
+  "nomeDevedor": "João Silva",
+  "nomeCredor": "Maria Santos"
+}
+
+###
+
+### Transação ISO20022 Completa
+POST https://localhost:7085/api/v2/transacoes/simular-iso20022
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 750.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 1002,
+  "informacaoRemessa": "Pagamento de fatura",
+  "codigoFinalidade": "TRAD",
+  "codigoCategoriaFinalidade": "OTHR",
+  "descricao": "Transação ISO20022 simulada",
+  "nomeDevedor": "João da Silva Santos",
+  "contaDevedor": "237-1234-567890",
+  "nomeCredor": "Maria Oliveira Lima",
+  "contaCredor": "341-5678-123456",
+  "bicAgenteDevedor": "BANK237BR",
+  "bicAgenteCredor": "BANK341BR"
+}
+
+###
+
+### =======================================
+### 4. ENTIDADES - CRIAÇÃO MANUAL
+### =======================================
+
+### Criar Pessoa
+POST https://localhost:7085/api/v2/transacoes/pessoas
+Content-Type: application/json
+
+{
+  "nome": "João Silva Santos",
+  "cpf": "12345678901",
+  "rg": "12.345.678-9",
+  "dataNascimento": "1985-03-15T00:00:00Z",
+  "email": "joao.silva@email.com",
+  "telefone": "(11) 3456-7890",
+  "celular": "(11) 99876-5432",
+  "enderecoId": null
+}
+
+###
+
+### Criar Empresa
+POST https://localhost:7085/api/v2/transacoes/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Tech Solutions Brasil LTDA",
+  "nomeFantasia": "Tech Solutions",
+  "cnpj": "12345678000195",
+  "inscricaoEstadual": "123.456.789.012",
+  "inscricaoMunicipal": "12345678",
+  "email": "contato@techsolutions.com.br",
+  "telefone": "(11) 3456-7890",
+  "website": "https://techsolutions.com.br",
+  "enderecoId": null
+}
+
+###
+
+### Criar Conta Bancária
+POST https://localhost:7085/api/v2/transacoes/contas
+Content-Type: application/json
+
+{
+  "banco": "237",
+  "agencia": "1234",
+  "numeroConta": "567890",
+  "digitoVerificador": "1",
+  "tipoConta": "ContaCorrente",
+  "saldoInicial": 7085.00,
+  "pessoaId": 1,
+  "empresaId": null
+}
+
+###
+
+### =======================================
+### 5. RELATÓRIOS & MinIO
+### =======================================
+
+### Listar Resumos de Relatórios de Simulação
+GET https://localhost:7085/api/reports/summaries?limite=20
+Accept: application/json
+
+###
+
+### Obter Relatório Específico
+GET https://localhost:7085/api/reports/2024/12/24/simulation_report_20241224_143015.json
+Accept: application/json
+
+###
+
+### Listar Todos os Arquivos no MinIO
+GET https://localhost:7085/api/reports/files
+Accept: application/json
+
+###
+
+### Listar Arquivos por Bucket
+GET https://localhost:7085/api/reports/files?bucket=simulation-reports&prefix=reports/
+Accept: application/json
+
+###
+
+### Listar Arquivos de Logs
+GET https://localhost:7085/api/reports/files?bucket=banking-logs&prefix=2024/
+Accept: application/json
+
+###
+
+### =======================================
+### 6. DOWNLOAD DE ARQUIVOS
+### =======================================
+
+### Download Direto de Relatório
+GET https://localhost:7085/api/reports/download/simulation-reports/reports%2F2024%2F12%2F24%2Fsimulation_report_20241224_143015.json
+Accept: application/json
+
+###
+
+### Download de Arquivo de Log
+GET https://localhost:7085/api/reports/download/banking-logs/logs%2F2024%2F12%2F24%2Fapplication.log
+Accept: application/octet-stream
+
+###
+
+### =======================================
+### 7. URLs PRÉ-ASSINADAS (ACESSO DIRETO)
+### =======================================
+
+### URL Pré-assinada para Relatório (60 minutos)
+GET https://localhost:7085/api/reports/presigned-url/simulation-reports/reports%2F2024%2F12%2F24%2Fsimulation_report_20241224_143015.json?expiryMinutes=60
+Accept: application/json
+
+###
+
+### URL Pré-assinada para Arquivo (30 minutos)
+GET https://localhost:7085/api/reports/presigned-url/banking-exports/exports%2F2024%2F12%2F24%2Fdados_exportados.csv?expiryMinutes=30
+Accept: application/json
+
+###
+
+### =======================================
+### 8. UPLOAD DE ARQUIVOS
+### =======================================
+
+### Upload para Bucket de Relatórios
+POST https://localhost:7085/api/reports/upload/simulation-reports
+Content-Type: multipart/form-data
+
+# Para testar via curl:
+# curl -X POST "https://localhost:7085/api/reports/upload/simulation-reports" \
+#   -F "file=@documento.pdf" \
+#   -F "customFileName=relatorio-importante.pdf"
+
+###
+
+### Upload para Bucket de Exports
+POST https://localhost:7085/api/reports/upload/banking-exports
+Content-Type: multipart/form-data
+
+# Para testar via curl:
+# curl -X POST "https://localhost:7085/api/reports/upload/banking-exports" \
+#   -F "file=@planilha.xlsx" \
+#   -F "customFileName=dados_2024.xlsx"
+
+###
+
+### =======================================
+### 9. REMOÇÃO DE ARQUIVOS
+### =======================================
+
+### Remover Arquivo do MinIO
+DELETE https://localhost:7085/api/reports/simulation-reports/uploads%2F2024%2F12%2F24%2Farquivo_teste.pdf
+
+###
+
+### Remover Log Antigo
+DELETE https://localhost:7085/api/reports/banking-logs/logs%2F2024%2F11%2F01%2Fapplication.log
+
+###
+
+### =======================================
+### 10. CENÁRIOS DE TESTE COMBINADOS
+### =======================================
+
+### Cenário 1: Teste Completo de Simulação
+### Passo 1: Ver status antes da simulação
+GET https://localhost:7085/api/health
+
+### Passo 2: Executar simulação
+POST https://localhost:7085/api/simulation/completa
+Content-Type: application/json
+
+{
+  "quantidadePessoas": 10,
+  "quantidadeEmpresas": 5,
+  "quantidadeTransacoes": 30
+}
+
+### Passo 3: Aguardar uns segundos e listar relatórios gerados
+GET https://localhost:7085/api/reports/summaries?limite=5
+
+###
+
+### Cenário 2: Transações Manuais Diversas
+### PIX
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 150.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "PIX teste"
+}
+
+### TED
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 2500.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 3,
+  "descricao": "TED teste"
+}
+
+### DOC
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "DOC",
+  "valor": 800.00,
+  "moeda": "BRL",
+  "contaOrigemId": 2,
+  "contaDestinoId": 1,
+  "descricao": "DOC teste"
+}
+
+###
+
+### Cenário 3: Gerenciamento de Arquivos
+### Listar arquivos
+GET https://localhost:7085/api/reports/files?bucket=simulation-reports
+
+### Obter URL pré-assinada
+GET https://localhost:7085/api/reports/presigned-url/simulation-reports/reports%2F2024%2F12%2F24%2Fsimulation_report_20241224_143015.json
+
+###
+
+### =======================================
+### 11. TESTES DE DESENVOLVIMENTO
+### =======================================
+
+### Teste de Conectividade Geral
+GET https://localhost:7085/
+Accept: text/html
+
+###
+
+### Verificar Swagger
+GET https://localhost:7085/swagger
+Accept: text/html
+
+###
+
+### Teste de Latência (múltiplas chamadas health)
+GET https://localhost:7085/health
+
+###
+GET https://localhost:7085/health
+
+###
+GET https://localhost:7085/health
+
+###
+
+### =======================================
+### 12. TESTES DE CARGA SIMULADA
+### =======================================
+
+### Múltiplas Transações PIX Simultâneas
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 100.01,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "PIX Load Test 1"
+}
+
+###
+
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 100.02,
+  "moeda": "BRL",
+  "contaOrigemId": 2,
+  "contaDestinoId": 3,
+  "descricao": "PIX Load Test 2"
+}
+
+###
+
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 100.03,
+  "moeda": "BRL",
+  "contaOrigemId": 3,
+  "contaDestinoId": 1,
+  "descricao": "PIX Load Test 3"
+}
+
+###
+
+### =======================================
+### 13. VALIDAÇÃO DE ERROS
+### =======================================
+
+### Transação com Valor Inválido (deve retornar erro)
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": -100.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste valor negativo"
+}
+
+###
+
+### Transação sem Moeda (deve usar BRL como padrão)
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 100.00,
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste sem moeda"
+}
+
+###
+
+### Arquivo Inexistente (deve retornar 404)
+GET https://localhost:7085/api/reports/download/simulation-reports/arquivo_inexistente.json
+
+###
+
+### Bucket Inexistente (deve retornar erro)
+GET https://localhost:7085/api/reports/files?bucket=bucket-inexistente
+
+###
+
+### =======================================
+### COMANDOS CURL EQUIVALENTES
+### =======================================
+
+# Simulação Rápida
+# curl -X POST "https://localhost:7085/api/simulation/rapida" \
+#   -H "Content-Type: application/json" \
+#   -k
+
+# Transação PIX
+# curl -X POST "https://localhost:7085/api/v2/transacoes/solicitar" \
+#   -H "Content-Type: application/json" \
+#   -d '{"tipoTransacao":"PIX","valor":150.00,"moeda":"BRL","contaOrigemId":1,"contaDestinoId":2,"descricao":"PIX via curl"}' \
+#   -k
+
+# Listar Relatórios
+# curl "https://localhost:7085/api/reports/summaries?limite=10" \
+#   -H "Accept: application/json" \
+#   -k
+
+# Upload de Arquivo
+# curl -X POST "https://localhost:7085/api/reports/upload/simulation-reports" \
+#   -F "file=@documento.pdf" \
+#   -F "customFileName=relatorio.pdf" \
+#   -k
+
+# Health Check
+# curl "https://localhost:7085/health" \
+#   -H "Accept: application/json" \
+#   -k
+
+### =======================================
+### NOTAS IMPORTANTES
+### =======================================
+# 1. Certifique-se de que a API está rodando em https://localhost:7085
+# 2. Para desenvolvimento local, pode usar http://localhost:7085
+# 3. Alguns endpoints podem retornar 202 Accepted (processamento assíncrono)
+# 4. URLs com caracteres especiais precisam ser URL encoded (%2F para /)
+# 5. Uploads de arquivo precisam ser testados via ferramenta que suporte multipart/form-data
+# 6. MinIO Console disponível em http://localhost:9001 (admin/admin123456)
+# 7. Kafka UI disponível em http://localhost:8080 (apenas em produção)
+# 8. Logs podem ser monitorados via: docker-compose logs -f banking-api

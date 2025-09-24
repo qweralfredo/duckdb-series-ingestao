@@ -1,0 +1,446 @@
+### Banking API - Exemplos para Desenvolvimento Local
+### Base URL: http://localhost:7085 (Desenvolvimento)
+
+### =======================================
+### DESENVOLVIMENTO LOCAL - SETUP RÁPIDO
+### =======================================
+
+### 1. Verificar se API está rodando
+GET http://localhost:7085/health
+
+###
+
+### 2. Executar simulação rápida (gera dados de teste)
+POST http://localhost:7085/api/simulation/rapida
+Content-Type: application/json
+
+###
+
+### 3. Ver relatórios gerados
+GET http://localhost:7085/api/reports/summaries
+Accept: application/json
+
+###
+
+### =======================================
+### TESTES UNITÁRIOS VIA HTTP
+### =======================================
+
+### Teste: Criar Pessoa com Dados Brasileiros
+POST http://localhost:7085/api/v2/transacoes/pessoas
+Content-Type: application/json
+
+{
+  "nome": "Ana Silva Souza",
+  "cpf": "11122233344",
+  "rg": "12.345.678-0",
+  "dataNascimento": "1990-05-20T00:00:00Z",
+  "email": "ana.silva@teste.com",
+  "telefone": "(11) 1234-5678",
+  "celular": "(11) 98765-4321"
+}
+
+###
+
+### Teste: Criar Empresa com CNPJ
+POST http://localhost:7085/api/v2/transacoes/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Empresa de Teste LTDA",
+  "nomeFantasia": "Teste Corp",
+  "cnpj": "11222333000144",
+  "inscricaoEstadual": "123.456.789.012",
+  "email": "contato@teste.com.br",
+  "telefone": "(11) 3333-4444"
+}
+
+###
+
+### Teste: Criar Conta Corrente
+POST http://localhost:7085/api/v2/transacoes/contas
+Content-Type: application/json
+
+{
+  "banco": "001",
+  "agencia": "0001",
+  "numeroConta": "123456",
+  "digitoVerificador": "7",
+  "tipoConta": "ContaCorrente",
+  "saldoInicial": 1000.00,
+  "pessoaId": 1
+}
+
+###
+
+### Teste: PIX de R$ 50,00
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 50.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste PIX R$ 50"
+}
+
+###
+
+### =======================================
+### TESTES DE VALIDAÇÃO
+### =======================================
+
+### Teste: Valor Zero (deve falhar)
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 0,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste valor zero"
+}
+
+###
+
+### Teste: Valor Negativo (deve falhar)
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": -100.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste valor negativo"
+}
+
+###
+
+### Teste: Sem Moeda (deve usar BRL como padrão)
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 25.50,
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Teste sem moeda especificada"
+}
+
+###
+
+### =======================================
+### TESTES DE DIFERENTES TIPOS DE TRANSAÇÃO
+### =======================================
+
+### PIX Instantâneo
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 75.30,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "PIX instantâneo de teste"
+}
+
+###
+
+### TED (Transferência Eletrônica Disponível)
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 1500.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 3,
+  "descricao": "TED para conta externa",
+  "nomeDevedor": "João Silva",
+  "nomeCredor": "Maria Santos"
+}
+
+###
+
+### DOC (Documento de Ordem de Crédito)
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "DOC",
+  "valor": 500.00,
+  "moeda": "BRL",
+  "contaOrigemId": 2,
+  "contaDestinoId": 1,
+  "descricao": "DOC de teste"
+}
+
+###
+
+### Transferência Simples
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "Transferencia",
+  "valor": 300.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Transferência entre contas"
+}
+
+###
+
+### Depósito
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "Deposito",
+  "valor": 200.00,
+  "moeda": "BRL",
+  "contaOrigemId": null,
+  "contaDestinoId": 1,
+  "descricao": "Depósito em dinheiro"
+}
+
+###
+
+### Saque
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "Saque",
+  "valor": 100.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": null,
+  "descricao": "Saque em caixa eletrônico"
+}
+
+###
+
+### Pagamento
+POST http://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "Pagamento",
+  "valor": 450.75,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "descricao": "Pagamento de boleto"
+}
+
+###
+
+### =======================================
+### TESTES ISO20022 COMPLETOS
+### =======================================
+
+### ISO20022 - PIX com Dados Completos
+POST http://localhost:7085/api/v2/transacoes/simular-iso20022
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 987.65,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 2,
+  "informacaoRemessa": "Pagamento de serviços de consultoria",
+  "codigoFinalidade": "TRAD",
+  "codigoCategoriaFinalidade": "OTHR",
+  "descricao": "Transação ISO20022 completa",
+  "nomeDevedor": "João da Silva Santos",
+  "contaDevedor": "001-0001-123456-7",
+  "nomeCredor": "Maria Oliveira Lima",
+  "contaCredor": "237-1234-567890-1",
+  "bicAgenteDevedor": "BANK001BR",
+  "bicAgenteCredor": "BANK237BR"
+}
+
+###
+
+### ISO20022 - TED Internacional
+POST http://localhost:7085/api/v2/transacoes/simular-iso20022
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 7085.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1,
+  "contaDestinoId": 3,
+  "informacaoRemessa": "Transferência internacional de fundos",
+  "codigoFinalidade": "INTC",
+  "codigoCategoriaFinalidade": "TRAD",
+  "descricao": "TED internacional ISO20022",
+  "nomeDevedor": "Empresa ABC LTDA",
+  "contaDevedor": "341-5678-123456-0",
+  "nomeCredor": "Fornecedor Internacional SA",
+  "contaCredor": "033-9876-654321-2",
+  "bicAgenteDevedor": "BANK341BR",
+  "bicAgenteCredor": "BANK033BR"
+}
+
+###
+
+### =======================================
+### MONITORAMENTO DE DESENVOLVIMENTO
+### =======================================
+
+### Ver Logs Recentes (via MinIO se configurado)
+GET http://localhost:7085/api/reports/files?bucket=banking-logs&prefix=logs/
+
+###
+
+### Status Detalhado do Sistema
+GET http://localhost:7085/api/health/info
+Accept: application/json
+
+###
+
+### Listar Últimos 5 Relatórios
+GET http://localhost:7085/api/reports/summaries?limite=5
+Accept: application/json
+
+###
+
+### Verificar Status do MinIO
+GET http://localhost:7085/api/reports/minio/status
+Accept: application/json
+
+###
+
+### =======================================
+### SIMULAÇÕES PARA DESENVOLVIMENTO
+### =======================================
+
+### Simulação Pequena (para debug)
+POST http://localhost:7085/api/simulation/completa
+Content-Type: application/json
+
+{
+  "quantidadePessoas": 3,
+  "quantidadeEmpresas": 1,
+  "quantidadeTransacoes": 5
+}
+
+###
+
+### Simulação Média (para testes)
+POST http://localhost:7085/api/simulation/completa
+Content-Type: application/json
+
+{
+  "quantidadePessoas": 8,
+  "quantidadeEmpresas": 3,
+  "quantidadeTransacoes": 15
+}
+
+###
+
+### =======================================
+### TESTES DE UPLOAD/DOWNLOAD (DEV)
+### =======================================
+
+### Listar Arquivos de Desenvolvimento
+GET http://localhost:7085/api/reports/files?bucket=dev-simulation-reports
+Accept: application/json
+
+###
+
+### Listar Arquivos de Teste
+GET http://localhost:7085/api/reports/files?bucket=dev-test-data
+Accept: application/json
+
+###
+
+### =======================================
+### ENDPOINTS DE DEPURAÇÃO
+### =======================================
+
+### Swagger Documentation
+GET http://localhost:7085/swagger/index.html
+Accept: text/html
+
+###
+
+### Redirect para Swagger (endpoint raiz)
+GET http://localhost:7085/
+Accept: text/html
+
+###
+
+### OpenAPI Specification
+GET http://localhost:7085/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+### OpenAPI v2 Specification
+GET http://localhost:7085/swagger/v2/swagger.json
+Accept: application/json
+
+###
+
+### =======================================
+### COMANDOS CURL PARA DESENVOLVIMENTO
+### =======================================
+
+# Teste rápido de conectividade
+# curl -v http://localhost:7085/health
+
+# Simulação para gerar dados de teste
+# curl -X POST http://localhost:7085/api/simulation/rapida \
+#   -H "Content-Type: application/json"
+
+# PIX de teste
+# curl -X POST http://localhost:7085/api/v2/transacoes/solicitar \
+#   -H "Content-Type: application/json" \
+#   -d '{"tipoTransacao":"PIX","valor":50.00,"moeda":"BRL","contaOrigemId":1,"contaDestinoId":2,"descricao":"PIX teste dev"}'
+
+# Ver relatórios gerados
+# curl http://localhost:7085/api/reports/summaries?limite=3
+
+# Status do MinIO local
+# curl http://localhost:7085/api/reports/minio/status
+
+### =======================================
+### VARIÁVEIS DE AMBIENTE PARA DESENVOLVIMENTO
+### =======================================
+
+# Defina estas variáveis no seu ambiente de desenvolvimento:
+# ASPNETCORE_ENVIRONMENT=Development
+# ASPNETCORE_URLS=http://localhost:7085
+# MinIO__Endpoint=localhost:9000
+# MinIO__AccessKey=devuser
+# MinIO__SecretKey=devpassword123
+# Simulation__SaveToMinIO=true
+# Logging__LogLevel__Default=Debug
+
+### =======================================
+### DICAS PARA DESENVOLVIMENTO
+### =======================================
+
+# 1. Use a simulação rápida para gerar dados de teste iniciais
+# 2. Monitore os logs via: docker-compose logs -f banking-api-dev
+# 3. MinIO Console dev: http://localhost:9001 (devuser/devpassword123)
+# 4. Para debug, use LogLevel=Debug no appsettings.Development.json
+# 5. Endpoints sempre retornam 202 Accepted para operações assíncronas
+# 6. Use Postman ou REST Client para testes mais avançados
+# 7. Para testes de carga, execute múltiplas requests em paralelo

@@ -1,0 +1,223 @@
+# Docker Compose para BankingApi com Kafka e MinIO
+
+services:
+  # Zookeeper - necessario para o Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: banking-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: banking-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Schema Registry para Kafka
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.0
+    hostname: schema-registry
+    container_name: banking-schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - banking-network
+
+  # Kafka UI para monitoramento
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: banking-kafka-ui
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: banking-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      DYNAMIC_CONFIG_ENABLED: true
+    networks:
+      - banking-network
+
+  # MinIO - Armazenamento S3-compativel
+  minio:
+    image: minio/minio:latest
+    hostname: minio
+    container_name: banking-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123456
+      MINIO_DOMAIN: minio
+      MINIO_REGION_NAME: us-east-1
+    volumes:
+      - minio-data:/data
+    networks:
+      - banking-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  # MinIO Client para inicializacao de buckets
+  minio-init:
+    image: minio/mc:latest
+    container_name: banking-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - banking-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      sleep 10 &&
+      mc alias set banking-minio http://minio:9000 admin admin123456 &&
+      mc mb banking-minio/simulation-reports --ignore-existing &&
+      mc mb banking-minio/banking-logs --ignore-existing &&
+      mc mb banking-minio/banking-backups --ignore-existing &&
+      mc mb banking-minio/banking-exports --ignore-existing &&
+      mc anonymous set public banking-minio/simulation-reports &&
+      mc anonymous set private banking-minio/banking-logs &&
+      mc anonymous set private banking-minio/banking-backups &&
+      mc anonymous set public banking-minio/banking-exports &&
+      echo 'Buckets MinIO criados:' &&
+      mc ls banking-minio &&
+      echo 'MinIO inicializado com sucesso!'
+
+  # BankingApi Application
+  # banking-api:
+  #   build:
+  #     context: .
+  #     dockerfile: BankingApi/Dockerfile
+  #   container_name: banking-api
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   ports:
+  #     - "5000:8080"
+  #     - "5001:8443"
+  #   environment:
+  #     # Configuracoes da aplicacao
+  #     ASPNETCORE_ENVIRONMENT: Production
+  #     ASPNETCORE_URLS: http://+:8080
+      
+  #     # Configuracoes do Kafka
+  #     Kafka__BootstrapServers: kafka:29092
+  #     Kafka__GroupId: banking-api
+  #     Kafka__AutoOffsetReset: Earliest
+      
+  #     # Configuracoes do MinIO
+  #     MinIO__Endpoint: minio:9000
+  #     MinIO__AccessKey: admin
+  #     MinIO__SecretKey: admin123456
+  #     MinIO__UseSSL: false
+  #     MinIO__Region: us-east-1
+  #     MinIO__BucketReports: simulation-reports
+  #     MinIO__BucketLogs: banking-logs
+  #     MinIO__BucketBackups: banking-backups
+  #     MinIO__BucketExports: banking-exports
+      
+  #     # Configuracoes de simulacao
+  #     Simulation__AutoRun: false
+  #     Simulation__IntervalMinutes: 10
+  #     Simulation__SaveToMinIO: true
+      
+  #     # Configuracoes de logging
+  #     Logging__LogLevel__Default: Information
+  #     Logging__LogLevel__BankingApi: Information
+  #   volumes:
+  #     - simulation-reports:/app/SimulationReports
+  #   networks:
+  #     - banking-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+  #   restart: unless-stopped
+
+  # Init container para criar topicos Kafka
+  kafka-init:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: banking-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - banking-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      sleep 10 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-transacao-solicitada --partitions 3 --replication-factor 1 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-transacao-processada --partitions 3 --replication-factor 1 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-saldo-atualizado --partitions 3 --replication-factor 1 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-conta-criada --partitions 2 --replication-factor 1 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-pessoa-criada --partitions 2 --replication-factor 1 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic banking-empresa-criada --partitions 2 --replication-factor 1 &&
+      echo 'Topicos Kafka criados:' &&
+      kafka-topics --list --bootstrap-server kafka:29092
+
+# Volumes para persistencia
+volumes:
+  simulation-reports:
+    driver: local
+  minio-data:
+    driver: local
+
+# Rede personalizada
+networks:
+  banking-network:
+    driver: bridge
+    name: banking-network

@@ -1,0 +1,62 @@
+# Arquivos e pastas a serem ignorados no build do Docker
+
+# Arquivos de build e saída
+**/bin/
+**/obj/
+**/out/
+
+# Arquivos do Visual Studio
+**/.vs/
+**/.vscode/
+*.user
+*.suo
+*.cache
+*.docstates
+
+# Arquivos temporários
+**/.tmp/
+**/temp/
+**/*.tmp
+**/*.temp
+
+# Logs
+**/logs/
+**/*.log
+
+# Arquivos de dependências
+**/node_modules/
+**/packages/
+
+# Arquivos do sistema operacional
+**/.DS_Store
+**/Thumbs.db
+**/*.swp
+**/*.swo
+
+# Arquivos de controle de versão
+**/.git/
+**/.gitignore
+**/.gitattributes
+
+# Documentação
+**/*.md
+**/README*
+**/CHANGELOG*
+**/LICENSE*
+
+# Arquivos de configuração do IDE
+**/.editorconfig
+**/.eslintrc*
+**/.prettierrc*
+
+# Arquivos de teste
+**/TestResults/
+**/*.trx
+**/*.coverage
+
+# Relatórios de simulação (gerados em runtime)
+**/SimulationReports/
+
+# Arquivos de configuração específicos de desenvolvimento
+**/appsettings.Development.json
+**/launchSettings.json

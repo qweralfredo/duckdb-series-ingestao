@@ -1,0 +1,46 @@
+# Dockerfile para desenvolvimento - BankingApi
+# Versão com hot reload e debugging
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS development
+
+# Instalar ferramentas úteis para desenvolvimento
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Definir diretório de trabalho
+WORKDIR /src
+
+# Instalar dotnet tools globais
+RUN dotnet tool install --global dotnet-ef
+RUN dotnet tool install --global dotnet-watch
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Copiar arquivos de projeto
+COPY ["BankingApi/BankingApi.csproj", "BankingApi/"]
+
+# Restaurar dependências
+RUN dotnet restore "BankingApi/BankingApi.csproj"
+
+# Copiar código fonte
+COPY BankingApi/ BankingApi/
+
+# Definir diretório de trabalho para a aplicação
+WORKDIR /src/BankingApi
+
+# Configurar variáveis de ambiente para desenvolvimento
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_URLS=http://+:5000
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV DOTNET_WATCH_RESTART_ON_RUDE_EDIT=true
+
+# Expor portas
+EXPOSE 5000
+EXPOSE 5001
+
+# Criar diretório para relatórios
+RUN mkdir -p /src/BankingApi/SimulationReports
+
+# Comando padrão com hot reload
+CMD ["dotnet", "watch", "run", "--urls", "http://+:5000"]

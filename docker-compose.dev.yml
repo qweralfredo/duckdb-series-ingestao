@@ -1,0 +1,154 @@
+# Docker Compose para Desenvolvimento - BankingApi com MinIO
+
+services:
+  # Kafka e dependencias (mesma configuracao de producao)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: dev-banking-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - dev-banking-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: dev-banking-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - dev-banking-network
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: dev-banking-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: dev-banking-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - dev-banking-network
+
+  # MinIO para desenvolvimento
+  minio:
+    image: minio/minio:latest
+    hostname: minio
+    container_name: dev-banking-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: devuser
+      MINIO_ROOT_PASSWORD: devpassword123
+      MINIO_DOMAIN: minio
+      MINIO_REGION_NAME: us-east-1
+    volumes:
+      - dev-minio-data:/data
+    networks:
+      - dev-banking-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MinIO Client para desenvolvimento
+  minio-init:
+    image: minio/mc:latest
+    container_name: dev-banking-minio-init
+    depends_on:
+      - minio
+    networks:
+      - dev-banking-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      sleep 10 &&
+      mc alias set dev-minio http://minio:9000 devuser devpassword123 &&
+      mc mb dev-minio/dev-simulation-reports --ignore-existing &&
+      mc mb dev-minio/dev-banking-logs --ignore-existing &&
+      mc mb dev-minio/dev-test-data --ignore-existing &&
+      mc anonymous set public dev-minio/dev-simulation-reports &&
+      mc anonymous set public dev-minio/dev-banking-logs &&
+      mc anonymous set public dev-minio/dev-test-data &&
+      echo 'MinIO Dev configurado:' &&
+      mc ls dev-minio
+
+  # BankingApi em modo desenvolvimento
+  banking-api-dev:
+    build:
+      context: .
+      dockerfile: BankingApi/Dockerfile.dev
+    container_name: dev-banking-api
+    depends_on:
+      - kafka
+      - minio
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      
+      # Configuracoes do Kafka para desenvolvimento
+      Kafka__BootstrapServers: kafka:29092
+      Kafka__GroupId: banking-api-dev
+      
+      # Configuracoes do MinIO para desenvolvimento
+      MinIO__Endpoint: minio:9000
+      MinIO__AccessKey: devuser
+      MinIO__SecretKey: devpassword123
+      MinIO__UseSSL: false
+      MinIO__Region: us-east-1
+      MinIO__BucketReports: dev-simulation-reports
+      MinIO__BucketLogs: dev-banking-logs
+      MinIO__BucketBackups: dev-test-data
+      MinIO__BucketExports: dev-test-data
+      
+      # Habilitar simulacao automatica para desenvolvimento
+      Simulation__AutoRun: false
+      Simulation__IntervalMinutes: 5
+      Simulation__SaveToMinIO: true
+      
+      # Logs mais verbosos para desenvolvimento
+      Logging__LogLevel__Default: Debug
+      Logging__LogLevel__BankingApi__Simulation: Information
+      Logging__LogLevel__BankingApi__Services: Information
+    volumes:
+      # Volume bind para hot reload
+      - ./BankingApi:/src/BankingApi:rw
+      # Volume para relatorios
+      - dev-simulation-reports:/src/BankingApi/SimulationReports
+    networks:
+      - dev-banking-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  dev-simulation-reports:
+    driver: local
+  dev-minio-data:
+    driver: local
+
+networks:
+  dev-banking-network:
+    driver: bridge
+    name: dev-banking-network    name: dev-banking-network

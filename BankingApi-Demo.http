@@ -1,0 +1,387 @@
+﻿### Banking API - Demonstração & Apresentação
+### Cenários práticos para showcase da API
+
+### =======================================
+### 🎯 CENÁRIO 1: DEMONSTRAÇÃO COMPLETA
+### =======================================
+
+### Passo 1: Verificar se a API está funcionando
+GET https://localhost:7085/health
+Accept: application/json
+
+### Resultado esperado: { "status": "healthy", "timestamp": "..." }
+
+###
+
+### Passo 2: Ver informações das simulações disponíveis
+GET https://localhost:7085/api/simulation/info
+Accept: application/json
+
+### Mostra os tipos de simulação e suas características
+
+###
+
+### Passo 3: Executar simulação rápida (cria dados de demonstração)
+POST https://localhost:7085/api/simulation/rapida
+Content-Type: application/json
+
+### Resultado: Criação de 5 pessoas, 2 empresas, 20 transações + relatório
+
+###
+
+### Passo 4: Ver os relatórios gerados automaticamente
+GET https://localhost:7085/api/reports/summaries?limite=3
+Accept: application/json
+
+### Mostra resumo das simulações executadas
+
+###
+
+### Passo 5: Ver arquivos salvos no MinIO
+GET https://localhost:7085/api/reports/files?bucket=simulation-reports
+Accept: application/json
+
+### Lista todos os arquivos de relatórios gerados
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 2: TRANSAÇÕES BANCÁRIAS REAIS
+### =======================================
+
+### PIX Instantâneo - R$ 250,00
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 250.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 1002,
+  "descricao": "PIX para amigo - Jantar"
+}
+
+### 💡 Demonstra: Transação instantânea, processamento assíncrono
+
+###
+
+### TED para Conta Externa - R$ 5.000,00
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 7085.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 2001,
+  "descricao": "Transferência para investimento",
+  "nomeDevedor": "João Silva Santos",
+  "nomeCredor": "Corretora XYZ LTDA"
+}
+
+### 💡 Demonstra: Transferência entre bancos, dados completos
+
+###
+
+### DOC Programado - R$ 1.200,00
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "DOC",
+  "valor": 1200.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1002,
+  "contaDestinoId": 1001,
+  "descricao": "Pagamento de aluguel - Dezembro/2024"
+}
+
+### 💡 Demonstra: Transação agendada, casos de uso empresarial
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 3: ISO20022 INTERNACIONAL
+### =======================================
+
+### Transação ISO20022 Completa - Padrão Internacional
+POST https://localhost:7085/api/v2/transacoes/simular-iso20022
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 1575.80,
+  "moeda": "BRL",
+  "contaOrigemId": 1001,
+  "contaDestinoId": 2002,
+  "informacaoRemessa": "Pagamento de serviços de consultoria internacional",
+  "codigoFinalidade": "TRAD",
+  "codigoCategoriaFinalidade": "OTHR",
+  "descricao": "Consulta tributária especializada",
+  "nomeDevedor": "Tech Solutions Brasil LTDA",
+  "contaDevedor": "237-1234-567890-1",
+  "nomeCredor": "Global Consulting Inc",
+  "contaCredor": "341-5678-123456-7",
+  "bicAgenteDevedor": "BANK237BR2SAO",
+  "bicAgenteCredor": "BANK341BR2RIO"
+}
+
+### 💡 Demonstra: Padrão internacional, dados estruturados, compliance
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 4: CRIAÇÃO MANUAL DE ENTIDADES
+### =======================================
+
+### Criar Cliente Pessoa Física
+POST https://localhost:7085/api/v2/transacoes/pessoas
+Content-Type: application/json
+
+{
+  "nome": "Maria Fernanda Silva Costa",
+  "cpf": "12345678901",
+  "rg": "12.345.678-9",
+  "dataNascimento": "1988-07-15T00:00:00Z",
+  "email": "maria.costa@email.com.br",
+  "telefone": "(11) 3456-7890",
+  "celular": "(11) 99876-5432",
+  "enderecoId": null
+}
+
+### 💡 Demonstra: Dados brasileiros válidos, validação de CPF
+
+###
+
+### Criar Cliente Pessoa Jurídica
+POST https://localhost:7085/api/v2/transacoes/empresas
+Content-Type: application/json
+
+{
+  "razaoSocial": "Inovação Digital Soluções LTDA",
+  "nomeFantasia": "InovaDigital",
+  "cnpj": "12345678000195",
+  "inscricaoEstadual": "123.456.789.012",
+  "inscricaoMunicipal": "87654321",
+  "email": "contato@inovadigital.com.br",
+  "telefone": "(11) 4002-8922",
+  "website": "https://inovadigital.com.br",
+  "enderecoId": null
+}
+
+### 💡 Demonstra: CNPJ válido, dados empresariais completos
+
+###
+
+### Criar Conta Bancária Premium
+POST https://localhost:7085/api/v2/transacoes/contas
+Content-Type: application/json
+
+{
+  "banco": "341",
+  "agencia": "0123",
+  "numeroConta": "456789",
+  "digitoVerificador": "0",
+  "tipoConta": "ContaCorrente",
+  "saldoInicial": 17085.00,
+  "empresaId": 1
+}
+
+### 💡 Demonstra: Conta empresarial, saldo inicial alto
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 5: CASOS DE USO EMPRESARIAL
+### =======================================
+
+### Folha de Pagamento - Múltiplos PIX
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 3500.00,
+  "moeda": "BRL",
+  "contaOrigemId": 2001,
+  "contaDestinoId": 1001,
+  "descricao": "Salário - Maria F. S. Costa - Dezembro/2024",
+  "informacaoRemessa": "Folha de pagamento ref. 12/2024"
+}
+
+###
+
+### Pagamento de Fornecedor via TED
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "TED",
+  "valor": 12750.50,
+  "moeda": "BRL",
+  "contaOrigemId": 2001,
+  "contaDestinoId": 3001,
+  "descricao": "Pagamento Fornecedor - NF 2024/12345",
+  "nomeDevedor": "Inovação Digital Soluções LTDA",
+  "nomeCredor": "Fornecedor ABC Materiais LTDA"
+}
+
+###
+
+### Recebimento de Cliente
+POST https://localhost:7085/api/v2/transacoes/solicitar
+Content-Type: application/json
+
+{
+  "tipoTransacao": "PIX",
+  "valor": 8950.00,
+  "moeda": "BRL",
+  "contaOrigemId": 1003,
+  "contaDestinoId": 2001,
+  "descricao": "Pagamento Projeto Web - Contrato 2024-456",
+  "informacaoRemessa": "Desenvolvimento sistema e-commerce"
+}
+
+### 💡 Demonstra: Fluxo completo B2B, rastreabilidade
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 6: RELATÓRIOS E AUDITORIA
+### =======================================
+
+### Baixar Relatório Específico
+GET https://localhost:7085/api/reports/download/simulation-reports/reports%2F2024%2F12%2F24%2Fsimulation_report_20241224_143015.json
+Accept: application/json
+
+### 💡 Demonstra: Relatórios estruturados, dados para auditoria
+
+###
+
+### Obter URL Pré-assinada (compartilhamento seguro)
+GET https://localhost:7085/api/reports/presigned-url/simulation-reports/reports%2F2024%2F12%2F24%2Fsimulation_report_20241224_143015.json?expiryMinutes=30
+Accept: application/json
+
+### 💡 Demonstra: Segurança, URLs temporárias
+
+###
+
+### Status Completo do Sistema
+GET https://localhost:7085/api/health/info
+Accept: application/json
+
+### 💡 Demonstra: Monitoramento, métricas de sistema
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 7: SIMULAÇÃO CUSTOMIZADA
+### =======================================
+
+### Simulação de Volume Médio (para demonstração ao vivo)
+POST https://localhost:7085/api/simulation/completa
+Content-Type: application/json
+
+{
+  "quantidadePessoas": 12,
+  "quantidadeEmpresas": 6,
+  "quantidadeTransacoes": 40
+}
+
+### 💡 Demonstra: Volume controlado, tempo de execução adequado para apresentação
+
+###
+
+### =======================================
+### 🎯 CENÁRIO 8: MONITORAMENTO EM TEMPO REAL
+### =======================================
+
+### Health Check Múltiplo (para demonstrar disponibilidade)
+GET https://localhost:7085/health
+
+###
+GET https://localhost:7085/api/health
+
+###
+GET https://localhost:7085/api/reports/minio/status
+
+### 💡 Demonstra: Monitoramento distribuído, health checks
+
+###
+
+### =======================================
+### 🎯 ROTEIRO SUGERIDO PARA APRESENTAÇÃO
+### =======================================
+
+# 🎬 ROTEIRO DE 10 MINUTOS:
+
+# 1. (1 min) Mostrar Health Check - Sistema funcionando
+# GET https://localhost:7085/health
+
+# 2. (2 min) Executar Simulação Rápida - Geração de dados
+# POST https://localhost:7085/api/simulation/rapida
+
+# 3. (1 min) Mostrar Relatórios - Dados gerados automaticamente
+# GET https://localhost:7085/api/reports/summaries
+
+# 4. (2 min) Transação PIX Manual - Caso de uso real
+# POST .../transacoes/solicitar (PIX de R$ 250)
+
+# 5. (2 min) Transação ISO20022 - Padrão internacional
+# POST .../simular-iso20022 (com dados completos)
+
+# 6. (1 min) MinIO Console - Mostrar arquivos salvos
+# Abrir http://localhost:9001
+
+# 7. (1 min) Arquitetura - Explicar eventos, Kafka, MinIO
+
+### =======================================
+### 🎯 PONTOS DE DESTAQUE PARA APRESENTAÇÃO
+### =======================================
+
+# ✅ Arquitetura Orientada a Eventos (MassTransit + Kafka)
+# ✅ Padrão ISO20022 para transações internacionais  
+# ✅ Armazenamento S3-compatível (MinIO) escalável
+# ✅ Dados brasileiros realistas (CPF, CNPJ válidos)
+# ✅ APIs REST completas e documentadas
+# ✅ Docker-ready (deploy simplificado)
+# ✅ Monitoramento e health checks integrados
+# ✅ Relatórios automáticos com métricas
+# ✅ URLs pré-assinadas para segurança
+# ✅ Simulador completo para testes e demos
+
+### =======================================
+### 📱 COMANDOS RÁPIDOS PARA LIVE DEMO
+### =======================================
+
+# Health Check
+curl -s https://localhost:7085/health | jq
+
+# Simulação Rápida  
+curl -X POST https://localhost:7085/api/simulation/rapida -H "Content-Type: application/json" -k
+
+# PIX R$ 100
+curl -X POST https://localhost:7085/api/v2/transacoes/solicitar \
+  -H "Content-Type: application/json" \
+  -d '{"tipoTransacao":"PIX","valor":100.00,"moeda":"BRL","contaOrigemId":1,"contaDestinoId":2,"descricao":"Demo PIX"}' \
+  -k
+
+# Ver Relatórios
+curl -s https://localhost:7085/api/reports/summaries?limite=3 -k | jq
+
+### =======================================
+### 💡 DICAS PARA APRESENTAÇÃO EFICAZ
+### =======================================
+
+# 1. Prepare o ambiente antes (docker-compose up -d)
+# 2. Execute uma simulação prévia para ter dados
+# 3. Tenha o MinIO Console aberto em aba separada
+# 4. Use ferramentas como jq para formatar JSON
+# 5. Monitore logs em tempo real: docker-compose logs -f banking-api
+# 6. Tenha exemplos de diferentes tipos de transação prontos
+# 7. Destaque a arquitetura orientada a eventos
+# 8. Mostre a escalabilidade do MinIO S3
+# 9. Enfatize a compliance com padrões internacionais (ISO20022)
+# 10. Demonstre monitoramento e observabilidade
